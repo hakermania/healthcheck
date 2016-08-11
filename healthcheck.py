@@ -12,13 +12,24 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+atLeastOneFail = False
+
+def fail(msg):
+	global atLeastOneFail
+	atLeastOneFail = True
+
+	print bcolors.FAIL + msg + bcolors.ENDC
+
 def main():
 	if len(sys.argv) != 2:
 		print 'Parse the ini file'
 		sys.exit(1)
 
 	config = configparser.ConfigParser()
-	config.read(sys.argv[1])
+        try:
+            config.read(sys.argv[1])
+        except Exception as e:
+            print 'Could not parse the ini file', sys.argv[1] + ':', str(e)
 
 	sectionCounter = 0
 	for section in config.sections():
@@ -31,7 +42,7 @@ def main():
 			check = config[section]['check']
 			print bcolors.HEADER + '--->', str(sectionCounter) + '.', section, '(' + site + ') ->', check + bcolors.ENDC
 		except:
-			print bcolors.FAIL + 'Malformed section', section + bcolors.ENDC
+			fail('Malformed section ' + section)
 			continue
 
 		request = urllib2.Request(site)
@@ -45,7 +56,7 @@ def main():
 		try:
 			req = urllib2.urlopen(request)
 		except urllib2.HTTPError as e:
-			print bcolors.FAIL + 'Could not get', site, '(' + str(e) + ')' + bcolors.ENDC
+			fail('Could not get ' + site + ' (' + str(e) + ')')
 			continue
 
 		content = req.read()
